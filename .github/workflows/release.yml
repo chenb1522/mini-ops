@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: linux
+            goarch: arm
+            goarm: "7"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: |
+          CGO_ENABLED=0 go build -ldflags="-s -w" -o "mini-ops-${GOOS}-${GOARCH}${GOARM:+v${GOARM}}" .
+          ls -lh mini-ops-*
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mini-ops-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm && format('v{0}', matrix.goarm) }}
+          path: mini-ops-*
+
+  release:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: List files
+        run: ls -lh dist/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/mini-ops-*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
