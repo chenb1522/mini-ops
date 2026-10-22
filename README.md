@@ -33,25 +33,25 @@ sudo sh install.sh 8080 admin mypassword
 
 ```bash
 # 以 amd64 为例
-chmod +x sysman-linux-amd64
-sudo ./sysman-linux-amd64
+chmod +x mini-ops-linux-amd64
+sudo ./mini-ops-linux-amd64
 ```
 
 | 架构 | 文件 |
 |------|------|
-| x86_64 | `sysman-linux-amd64` |
-| arm64 | `sysman-linux-arm64` |
-| armv7 | `sysman-linux-armv7` |
+| x86_64 | `mini-ops-linux-amd64` |
+| arm64 | `mini-ops-linux-arm64` |
+| armv7 | `mini-ops-linux-armv7` |
 
 ### 方式三：手动安装为系统服务
 
 ```bash
 # 1. 放入系统路径
-sudo mv sysman-linux-amd64 /usr/local/bin/sysman
-sudo chmod +x /usr/local/bin/sysman
+sudo mv mini-ops-linux-amd64 /usr/local/bin/mini-ops
+sudo chmod +x /usr/local/bin/mini-ops
 
 # 2. 后台运行
-sudo nohup /usr/local/bin/sysman >/var/log/sysman.log 2>&1 &
+sudo nohup /usr/local/bin/mini-ops >/var/log/mini-ops.log 2>&1 &
 ```
 
 ## 启动后如何使用
@@ -69,32 +69,32 @@ sudo nohup /usr/local/bin/sysman >/var/log/sysman.log 2>&1 &
 | `-pass` | 登录密码（留空自动生成） | 随机 |
 | `-no-auth` | 禁用认证（仅限可信内网） | 关闭 |
 
-也支持环境变量 `SYSMAN_PORT` / `SYSMAN_USER` / `SYSMAN_PASS` 配置。
+也支持环境变量 `MINIOPS_PORT` / `MINIOPS_USER` / `MINIOPS_PASS` 配置。
 
 示例：
 
 ```bash
 # 指定端口和密码
-./sysman-linux-amd64 -port 8080 -pass mypassword
+./mini-ops-linux-amd64 -port 8080 -pass mypassword
 
 # 内网可信环境，免登录
-./sysman-linux-amd64 -no-auth
+./mini-ops-linux-amd64 -no-auth
 
 # 环境变量方式
-SYSMAN_PORT=8080 SYSMAN_PASS=xxx ./sysman-linux-amd64
+MINIOPS_PORT=8080 MINIOPS_PASS=xxx ./mini-ops-linux-amd64
 ```
 
 ## 本地编译
 
 ```bash
-cd sysman
+cd mini-ops
 # 编译当前平台
-go build -ldflags="-s -w" -o sysman .
+go build -ldflags="-s -w" -o mini-ops .
 
 # 交叉编译（发布用）
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o sysman-linux-amd64 .
-GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o sysman-linux-arm64 .
-GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -ldflags="-s -w" -o sysman-linux-armv7 .
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o mini-ops-linux-amd64 .
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o mini-ops-linux-arm64 .
+GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -ldflags="-s -w" -o mini-ops-linux-armv7 .
 ```
 
 ## API 接口
@@ -119,7 +119,7 @@ GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -ldflags="-s -w" -o sysman-
 ## 目录结构
 
 ```
-sysman/
+mini-ops/
 ├── main.go          # 入口 + HTTP 路由 + 认证
 ├── system.go        # 系统信息采集（/proc 读取）
 ├── nginx.go         # nginx 管理 + 发行版适配

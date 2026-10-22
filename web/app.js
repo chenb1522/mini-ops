@@ -1,4 +1,4 @@
-// SysMan 前端逻辑
+// mini-ops 前端逻辑
 
 let statsTimer = null;
 

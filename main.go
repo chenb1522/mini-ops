@@ -16,19 +16,19 @@ var webFS embed.FS
 const (
 	defaultPort = "8888"
 	defaultUser = "admin"
-	appName     = "sysman"
+	appName     = "mini-ops"
 )
 
 func main() {
-	port := flag.String("port", envOr("SYSMAN_PORT", defaultPort), "监听端口")
-	user := flag.String("user", envOr("SYSMAN_USER", defaultUser), "登录用户名")
-	pass := flag.String("pass", envOr("SYSMAN_PASS", ""), "登录密码（留空则自动生成）")
+	port := flag.String("port", envOr("MINIOPS_PORT", defaultPort), "监听端口")
+	user := flag.String("user", envOr("MINIOPS_USER", defaultUser), "登录用户名")
+	pass := flag.String("pass", envOr("MINIOPS_PASS", ""), "登录密码（留空则自动生成）")
 	noAuth := flag.Bool("no-auth", false, "禁用登录验证（仅限内网可信环境）")
 	flag.Parse()
 
 	if *pass == "" {
 		*pass = genPassword()
-		log.Printf("[sysman] 已生成随机密码，请记录: %s", *pass)
+		log.Printf("[mini-ops] 已生成随机密码，请记录: %s", *pass)
 	}
 
 	mux := http.NewServeMux()
@@ -65,10 +65,10 @@ func main() {
 	mux.Handle("/api/", handler)
 
 	addr := ":" + *port
-	log.Printf("[sysman] 服务已启动: http://0.0.0.0%s  (用户: %s)", addr, *user)
-	log.Printf("[sysman] 请通过浏览器访问，默认用户名 %s", *user)
+	log.Printf("[mini-ops] 服务已启动: http://0.0.0.0%s  (用户: %s)", addr, *user)
+	log.Printf("[mini-ops] 请通过浏览器访问，默认用户名 %s", *user)
 	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Fatalf("[sysman] 启动失败: %v", err)
+		log.Fatalf("[mini-ops] 启动失败: %v", err)
 	}
 }
 
@@ -95,7 +95,7 @@ func authMiddleware(user, pass string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		u, p, ok := r.BasicAuth()
 		if !ok || !safeEqual(u, user) || !safeEqual(p, pass) {
-			w.Header().Set("WWW-Authenticate", `Basic realm="sysman"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="mini-ops"`)
 			http.Error(w, `{"error":"未授权"}`, http.StatusUnauthorized)
 			return
 		}
