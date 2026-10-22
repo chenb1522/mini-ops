@@ -74,7 +74,6 @@ fi
 DOWNLOAD_OK=0
 for URL in $URLS; do
   [ -z "$URL" ] && continue
-  echo "    尝试: $URL"
   if download_from "$URL"; then
     DOWNLOAD_OK=1
     break
@@ -118,7 +117,6 @@ MINIOPS_PORT=${PORT}
 MINIOPS_USER=${USER}
 MINIOPS_PASS=${FINAL_PASS}
 EOF
-echo "==> 使用密码: ${FINAL_PASS}"
 
 # 注册 systemd 服务（若有 systemd）
 if [ -d /run/systemd/system ]; then
