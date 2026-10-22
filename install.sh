@@ -4,7 +4,7 @@
 # 或:   sudo sh install.sh [端口] [用户名] [密码]
 #
 # 说明：
-#   - 不指定密码时，首次安装会自动生成随机密码（打印在日志里）
+#   - 不指定密码时，脚本会自动生成随机密码并直接打印在安装结果里
 #   - 多次运行是幂等的：已有密码会保留，不会因重复安装而改变
 
 set -e
@@ -62,23 +62,25 @@ if [ -f "${ENV_FILE}" ]; then
   OLD_PASS=$(grep -E '^MINIOPS_PASS=' "${ENV_FILE}" 2>/dev/null | head -1 | cut -d'=' -f2-)
 fi
 
-# 决定最终密码：命令行指定 > 旧配置已有 > 留空让程序自动生成
-FINAL_PASS="${PASS:-${OLD_PASS}}"
+# 决定最终密码：命令行指定 > 旧配置已有 > 脚本自动生成
+if [ -n "$PASS" ]; then
+  FINAL_PASS="$PASS"
+elif [ -n "$OLD_PASS" ]; then
+  FINAL_PASS="$OLD_PASS"
+else
+  # 生成随机密码（12 位）
+  FINAL_PASS=$(head -c 12 /dev/urandom | base64 2>/dev/null | tr -d '/+=' | head -c 12)
+  if [ -z "$FINAL_PASS" ]; then
+    FINAL_PASS=$(date +%s | md5sum | cut -c1-12)
+  fi
+fi
 
-if [ -n "$FINAL_PASS" ]; then
-  cat > "${ENV_FILE}" <<EOF
+cat > "${ENV_FILE}" <<EOF
 MINIOPS_PORT=${PORT}
 MINIOPS_USER=${USER}
 MINIOPS_PASS=${FINAL_PASS}
 EOF
-  echo "==> 使用密码: ${FINAL_PASS}"
-else
-  cat > "${ENV_FILE}" <<EOF
-MINIOPS_PORT=${PORT}
-MINIOPS_USER=${USER}
-EOF
-  echo "==> 未指定密码，将由程序自动生成随机密码"
-fi
+echo "==> 使用密码: ${FINAL_PASS}"
 
 # 注册 systemd 服务（若有 systemd）
 if [ -d /run/systemd/system ]; then
@@ -118,9 +120,5 @@ echo "======================================"
 echo " mini-ops 安装完成！"
 echo " 访问地址: http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '服务器IP'):${PORT}"
 echo " 用户名: ${USER}"
-if [ -n "$FINAL_PASS" ]; then
-  echo " 密码: ${FINAL_PASS}"
-else
-  echo " 密码: 启动时自动生成，查看日志: journalctl -u mini-ops 或 /var/log/mini-ops.log"
-fi
+echo " 密码: ${FINAL_PASS}"
 echo "======================================"
