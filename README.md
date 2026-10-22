@@ -104,6 +104,20 @@ GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o mini-ops-linu
 GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -ldflags="-s -w" -o mini-ops-linux-armv7 .
 ```
 
+## 发布新版本
+
+本项目使用 GitHub Actions 自动构建并发布。**只需打一个 tag 并推送**，GitHub 会自动编译三个架构的二进制并发布到 Releases：
+
+```bash
+# 提交你的改动后，打 tag 并推送
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+推送 tag 后，到仓库的 [Actions](https://github.com/chenb1522/mini-ops/actions) 页面可看到自动构建过程，完成后到 [Releases](https://github.com/chenb1522/mini-ops/releases) 即可看到发布好的二进制。
+
+> 也可以手动触发：Actions 页面 → Release workflow → Run workflow。
+
 ## API 接口
 
 | 方法 | 路径 | 说明 |
