@@ -135,6 +135,22 @@ git push origin v1.0.0
 
 > 也可以手动触发：Actions 页面 → Release workflow → Run workflow。
 
+## 卸载
+
+```bash
+# 停止服务并删除二进制、配置、日志
+sudo /usr/local/bin/mini-ops -uninstall
+```
+
+或手动删除：
+
+```bash
+sudo systemctl stop mini-ops
+sudo systemctl disable mini-ops
+sudo rm -f /etc/systemd/system/mini-ops.service
+sudo rm -rf /etc/mini-ops /usr/local/bin/mini-ops /var/log/mini-ops.log
+```
+
 ## API 接口
 
 | 方法 | 路径 | 说明 |

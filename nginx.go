@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -259,6 +260,39 @@ func pathExists(path string) bool {
 func mustReadFile(path string) []byte {
 	data, _ := os.ReadFile(path)
 	return data
+}
+
+// doUninstall 卸载 mini-ops：停止并删除服务、删除配置和二进制
+func doUninstall() {
+	fmt.Println("==> 正在卸载 mini-ops ...")
+
+	// 1. 停止并删除 systemd 服务
+	if pathExists("/run/systemd/system") && pathExists("/etc/systemd/system/mini-ops.service") {
+		runCmd([]string{"systemctl", "stop", "mini-ops"})
+		runCmd([]string{"systemctl", "disable", "mini-ops"})
+		os.Remove("/etc/systemd/system/mini-ops.service")
+		runCmd([]string{"systemctl", "daemon-reload"})
+		fmt.Println("  已停止并删除 systemd 服务")
+	}
+
+	// 2. 删除配置文件
+	if pathExists("/etc/mini-ops") {
+		os.RemoveAll("/etc/mini-ops")
+		fmt.Println("  已删除配置目录 /etc/mini-ops")
+	}
+
+	// 3. 删除二进制
+	if pathExists("/usr/local/bin/mini-ops") {
+		os.Remove("/usr/local/bin/mini-ops")
+		fmt.Println("  已删除 /usr/local/bin/mini-ops")
+	}
+
+	// 4. 删除日志
+	if pathExists("/var/log/mini-ops.log") {
+		os.Remove("/var/log/mini-ops.log")
+	}
+
+	fmt.Println("==> mini-ops 卸载完成")
 }
 
 // filepath 保留引用，避免某些平台未使用

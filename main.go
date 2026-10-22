@@ -28,7 +28,13 @@ func main() {
 	user := flag.String("user", envOr("MINIOPS_USER", defaultUser), "登录用户名")
 	pass := flag.String("pass", envOr("MINIOPS_PASS", ""), "登录密码（留空则自动生成）")
 	noAuth := flag.Bool("no-auth", false, "禁用登录验证（仅限内网可信环境）")
+	uninstall := flag.Bool("uninstall", false, "卸载 mini-ops（停止服务并删除相关文件）")
 	flag.Parse()
+
+	if *uninstall {
+		doUninstall()
+		return
+	}
 
 	if *pass == "" {
 		*pass = genPassword()
