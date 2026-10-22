@@ -4,6 +4,7 @@ import (
 	"embed"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -33,8 +34,9 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// 静态资源
-	mux.Handle("/static/", http.FileServer(http.FS(webFS)))
+	// 静态资源（embed 路径为 web/xxx，需去掉前缀映射到 /static/xxx）
+	webSub, _ := fs.Sub(webFS, "web")
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(webSub))))
 
 	// 根路径 -> 首页
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
