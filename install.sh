@@ -35,17 +35,52 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-echo "==> 下载 mini-ops (${BINARCH})..."
+# 下载工具选择
 if command -v curl >/dev/null 2>&1; then
-  curl -fsSL -o /tmp/mini-ops "${BASE_URL}/${BIN_NAME}" || {
-    echo "下载失败，请检查网络或 MINIOPS_BASE_URL"; exit 1;
-  }
+  DOWNLOADER="curl"
 elif command -v wget >/dev/null 2>&1; then
-  wget -q -O /tmp/mini-ops "${BASE_URL}/${BIN_NAME}" || {
-    echo "下载失败，请检查网络或 MINIOPS_BASE_URL"; exit 1;
-  }
+  DOWNLOADER="wget"
 else
   echo "需要 curl 或 wget"; exit 1
+fi
+
+# 下载函数：尝试从某个 URL 下载，成功返回 0
+download_from() {
+  local url="$1"
+  if [ "$DOWNLOADER" = "curl" ]; then
+    curl -fsSL --connect-timeout 15 -o /tmp/mini-ops "$url" 2>/dev/null
+  else
+    wget -q -T 15 -O /tmp/mini-ops "$url" 2>/dev/null
+  fi
+}
+
+echo "==> 下载 mini-ops (${BINARCH})..."
+
+# 下载源列表：用户自定义源 > 加速镜像（国内） > GitHub 官方源
+# 注：加速镜像为第三方公共服务，仅用于加速下载；若不可用会自动回退官方源
+if [ -n "$MINIOPS_BASE_URL" ]; then
+  URLS="${MINIOPS_BASE_URL}/${BIN_NAME}"
+else
+  URLS="
+https://ghproxy.com/https://github.com/chenb1522/mini-ops/releases/latest/download/${BIN_NAME}
+https://mirror.ghproxy.com/https://github.com/chenb1522/mini-ops/releases/latest/download/${BIN_NAME}
+https://github.com/chenb1522/mini-ops/releases/latest/download/${BIN_NAME}
+"
+fi
+
+DOWNLOAD_OK=0
+for URL in $URLS; do
+  [ -z "$URL" ] && continue
+  echo "    尝试: $URL"
+  if download_from "$URL"; then
+    DOWNLOAD_OK=1
+    break
+  fi
+done
+
+if [ "$DOWNLOAD_OK" -ne 1 ]; then
+  echo "下载失败，请检查网络；或手动下载后放到 ${INSTALL_DIR}/mini-ops"
+  exit 1
 fi
 
 chmod +x /tmp/mini-ops
