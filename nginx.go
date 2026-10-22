@@ -8,8 +8,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
+
+// nginxInstallMu 保证安装/重启等操作互斥，防止并发重复执行
+var nginxInstallMu sync.Mutex
 
 // pkgManager 包管理器信息
 type pkgManager struct {
@@ -126,6 +130,19 @@ func handleNginxInstall(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]interface{}{"ok": true, "message": "nginx 已安装", "installed": true})
 		return
 	}
+	// 加锁：同一时间只允许一个安装请求执行，防止重复点击导致并发安装
+	if !nginxInstallMu.TryLock() {
+		writeJSON(w, map[string]interface{}{"ok": false, "message": "正在安装中，请勿重复操作"})
+		return
+	}
+	defer nginxInstallMu.Unlock()
+
+	// 双重检查：拿到锁后再确认一次
+	if nginxInstalled() {
+		writeJSON(w, map[string]interface{}{"ok": true, "message": "nginx 已安装", "installed": true})
+		return
+	}
+
 	pm := detectPkgManager()
 	if len(pm.Install) == 0 {
 		writeJSON(w, map[string]interface{}{"ok": false, "message": "无法识别的包管理器，请手动安装 nginx"})
@@ -149,6 +166,12 @@ func handleNginxRestart(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]interface{}{"ok": false, "message": "nginx 未安装"})
 		return
 	}
+	if !nginxInstallMu.TryLock() {
+		writeJSON(w, map[string]interface{}{"ok": false, "message": "操作进行中，请稍候"})
+		return
+	}
+	defer nginxInstallMu.Unlock()
+
 	// 先测试配置
 	if testOut, err := nginxTest(); err != nil {
 		writeJSON(w, map[string]interface{}{"ok": false, "message": "配置有误，已取消重启:\n" + cleanErr(err, testOut)})
