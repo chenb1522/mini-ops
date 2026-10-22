@@ -15,16 +15,24 @@
 
 ### 方式一：一键安装（推荐）
 
+**国内用户（走加速镜像）：**
+
+```bash
+curl -fsSL https://ghproxy.com/https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
+```
+
+**国外 / 官方源：**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
 ```
 
-安装完成后访问 `http://服务器IP:18080`，默认用户名 `admin`。
+安装完成后访问 `http://服务器IP:18080`，默认用户名 `admin`（密码在安装结果里直接打印）。
 
 如需指定端口 / 用户名 / 密码：
 
 ```bash
-sudo sh install.sh 8080 admin mypassword
+sudo sh install.sh 18080 admin mypassword
 ```
 
 ### 方式二：下载二进制手动运行
