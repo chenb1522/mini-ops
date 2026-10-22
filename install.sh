@@ -1,7 +1,7 @@
 #!/bin/sh
 # mini-ops 一键安装脚本
 # 用法: curl -fsSL https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
-# 或:   sudo sh install.sh [端口] [用户名] [密码]
+# 或:   sudo sh install.sh [端口] [密码]
 #
 # 说明：
 #   - 不指定密码时，脚本会自动生成随机密码并直接打印在安装结果里
@@ -10,8 +10,7 @@
 set -e
 
 PORT="${1:-18080}"
-USER="${2:-admin}"
-PASS="${3:-}"
+PASS="${2:-}"
 
 # 检测架构
 ARCH=$(uname -m)
@@ -114,7 +113,6 @@ fi
 
 cat > "${ENV_FILE}" <<EOF
 MINIOPS_PORT=${PORT}
-MINIOPS_USER=${USER}
 MINIOPS_PASS=${FINAL_PASS}
 EOF
 
@@ -155,6 +153,5 @@ echo ""
 echo "======================================"
 echo " mini-ops 安装完成！"
 echo " 访问地址: http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '服务器IP'):${PORT}"
-echo " 用户名: ${USER}"
 echo " 密码: ${FINAL_PASS}"
 echo "======================================"

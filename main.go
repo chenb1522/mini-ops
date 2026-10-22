@@ -19,13 +19,10 @@ var webFS embed.FS
 
 const (
 	defaultPort = "18080"
-	defaultUser = "admin"
-	appName     = "mini-ops"
 )
 
 func main() {
 	port := flag.String("port", envOr("MINIOPS_PORT", defaultPort), "监听端口")
-	user := flag.String("user", envOr("MINIOPS_USER", defaultUser), "登录用户名")
 	pass := flag.String("pass", envOr("MINIOPS_PASS", ""), "登录密码（留空则自动生成）")
 	noAuth := flag.Bool("no-auth", false, "禁用登录验证（仅限内网可信环境）")
 	uninstall := flag.Bool("uninstall", false, "卸载 mini-ops（停止服务并删除相关文件）")
@@ -82,18 +79,17 @@ func main() {
 		// 登录接口（校验通过则种 cookie）
 		mux.HandleFunc("/api/login", func(w http.ResponseWriter, r *http.Request) {
 			var req struct {
-				Username string `json:"username"`
 				Password string `json:"password"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				writeJSON(w, map[string]interface{}{"ok": false, "message": "请求格式错误"})
 				return
 			}
-			if !safeEqual(req.Username, *user) || !safeEqual(req.Password, *pass) {
-				writeJSON(w, map[string]interface{}{"ok": false, "message": "用户名或密码错误"})
+			if !safeEqual(req.Password, *pass) {
+				writeJSON(w, map[string]interface{}{"ok": false, "message": "密码错误"})
 				return
 			}
-			token := sessionToken(*user, *pass)
+			token := sessionToken(*pass)
 			http.SetCookie(w, &http.Cookie{
 				Name:     "miniops_token",
 				Value:    token,
@@ -105,15 +101,14 @@ func main() {
 		})
 
 		// 认证中间件（cookie 或 Basic Auth 均可）
-		mux.Handle("/api/", authMiddleware(*user, *pass, api))
+		mux.Handle("/api/", authMiddleware(*pass, api))
 
 		// 覆盖根路径：未登录时跳转登录页
-		mux.HandleFunc("/", indexHandlerWithAuth(*user, *pass))
+		mux.HandleFunc("/", indexHandlerWithAuth(*pass))
 	}
 
 	addr := ":" + *port
-	log.Printf("[mini-ops] 服务已启动: http://0.0.0.0%s  (用户: %s)", addr, *user)
-	log.Printf("[mini-ops] 请通过浏览器访问，默认用户名 %s", *user)
+	log.Printf("[mini-ops] 服务已启动: http://0.0.0.0%s", addr)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatalf("[mini-ops] 启动失败: %v", err)
 	}
@@ -138,9 +133,9 @@ func genPassword() string {
 }
 
 // authMiddleware 认证中间件：支持 cookie token 或 HTTP Basic Auth
-func authMiddleware(user, pass string, next http.Handler) http.Handler {
+func authMiddleware(pass string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if checkAuth(r, user, pass) {
+		if checkAuth(r, pass) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -150,26 +145,26 @@ func authMiddleware(user, pass string, next http.Handler) http.Handler {
 	})
 }
 
-func checkAuth(r *http.Request, user, pass string) bool {
+func checkAuth(r *http.Request, pass string) bool {
 	// 1. cookie token
-	if c, err := r.Cookie("miniops_token"); err == nil && safeEqual(c.Value, sessionToken(user, pass)) {
+	if c, err := r.Cookie("miniops_token"); err == nil && safeEqual(c.Value, sessionToken(pass)) {
 		return true
 	}
-	// 2. Basic Auth（兼容 API 工具调用）
-	if u, p, ok := r.BasicAuth(); ok && safeEqual(u, user) && safeEqual(p, pass) {
+	// 2. Basic Auth（兼容 API 工具调用，密码作为密码位）
+	if _, p, ok := r.BasicAuth(); ok && safeEqual(p, pass) {
 		return true
 	}
 	return false
 }
 
 // indexHandlerWithAuth 带登录检查的首页处理器
-func indexHandlerWithAuth(user, pass string) http.HandlerFunc {
+func indexHandlerWithAuth(pass string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
 			return
 		}
-		if !checkAuth(r, user, pass) {
+		if !checkAuth(r, pass) {
 			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
@@ -179,8 +174,8 @@ func indexHandlerWithAuth(user, pass string) http.HandlerFunc {
 	}
 }
 
-func sessionToken(user, pass string) string {
-	sum := sha256.Sum256([]byte("miniops:" + user + ":" + pass))
+func sessionToken(pass string) string {
+	sum := sha256.Sum256([]byte("miniops:" + pass))
 	return hex.EncodeToString(sum[:16])
 }
 

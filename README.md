@@ -36,12 +36,12 @@ curl -fsSL https://gh-proxy.com/https://raw.githubusercontent.com/chenb1522/mini
 curl -fsSL https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
 ```
 
-安装完成后访问 `http://服务器IP:18080`，默认用户名 `admin`（密码在安装结果里直接打印）。
+安装完成后访问 `http://服务器IP:18080`，输入安装结果里打印的密码即可登录。
 
-如需指定端口 / 用户名 / 密码：
+如需指定端口 / 密码：
 
 ```bash
-sudo sh install.sh 18080 admin mypassword
+sudo sh install.sh 18080 mypassword
 ```
 
 ### 方式二：下载二进制手动运行
@@ -65,7 +65,7 @@ sudo ./mini-ops-linux-amd64
 sudo ./mini-ops-linux-amd64 -port 8080 -pass yourpassword
 ```
 
-> 运行后浏览器打开 `http://服务器IP:端口`，用启动日志里的用户名和密码登录。
+> 运行后浏览器打开 `http://服务器IP:端口`，输入启动时打印的密码登录。
 
 ### 方式三：手动安装为系统服务
 
@@ -81,19 +81,17 @@ sudo nohup /usr/local/bin/mini-ops >/var/log/mini-ops.log 2>&1 &
 ## 启动后如何使用
 
 1. 浏览器打开 `http://服务器IP:18080`
-2. 输入用户名 `admin`
-3. 密码在启动日志中：随机生成会打印 `已生成随机密码，请记录: xxx`；若用 `-pass` 指定则用你设的密码
+2. 输入密码登录（随机生成会打印 `已生成随机密码，请记录: xxx`；若用 `-pass` 指定则用你设的密码）
 
 ## 命令行参数
 
 | 参数 | 说明 | 默认 |
 |------|------|------|
 | `-port` | 监听端口 | `18080` |
-| `-user` | 登录用户名 | `admin` |
 | `-pass` | 登录密码（留空自动生成） | 随机 |
 | `-no-auth` | 禁用认证（仅限可信内网） | 关闭 |
 
-也支持环境变量 `MINIOPS_PORT` / `MINIOPS_USER` / `MINIOPS_PASS` 配置。
+也支持环境变量 `MINIOPS_PORT` / `MINIOPS_PASS` 配置。
 
 示例：
 
