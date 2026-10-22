@@ -7,70 +7,109 @@
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header class="topbar">
+
+<!-- 侧边栏 -->
+<aside class="sidebar">
   <div class="brand">
-    <span class="logo">⚙️</span> mini-ops
+    <span class="logo">⚙️</span>
+    <span class="brand-name">mini-ops</span>
   </div>
-  <div class="host" id="hostname">加载中...</div>
-  <div class="time" id="clock"></div>
-</header>
+  <nav>
+    <a class="nav-item active" href="#overview"><span class="nav-icon">📊</span><span>概览</span></a>
+    <a class="nav-item" href="#system"><span class="nav-icon">🖥️</span><span>系统信息</span></a>
+    <a class="nav-item" href="#disk"><span class="nav-icon">💾</span><span>磁盘</span></a>
+    <a class="nav-item" href="#nginx"><span class="nav-icon">🟢</span><span>Nginx</span></a>
+  </nav>
+  <div class="host-info">
+    <div class="label">主机</div>
+    <div id="hostname">加载中...</div>
+  </div>
+</aside>
 
-<main class="container">
+<!-- 主区域 -->
+<div class="main">
+  <div class="page-header">
+    <div class="title">服务器概览</div>
+    <div class="time" id="clock"></div>
+  </div>
 
-  <!-- 基本信息 -->
-  <section class="card">
-    <h2>🖥️ 基本信息</h2>
-    <div class="grid" id="system-info">
+  <!-- 概览指标 -->
+  <div class="metric-grid" id="overview">
+    <div class="metric-card">
+      <div class="accent cpu"></div>
+      <div class="metric-label">CPU 使用率</div>
+      <div class="metric-value"><span id="cpu-val">--</span><span class="metric-unit">%</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="accent mem"></div>
+      <div class="metric-label">内存使用率</div>
+      <div class="metric-value"><span id="mem-val">--</span><span class="metric-unit">%</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="accent disk"></div>
+      <div class="metric-label">磁盘已用</div>
+      <div class="metric-value"><span id="disk-val">--</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="accent net"></div>
+      <div class="metric-label">运行时长</div>
+      <div class="metric-value" style="font-size:22px;" id="uptime-val">--</div>
+    </div>
+  </div>
+
+  <!-- 资源占用 -->
+  <section class="card" id="resource">
+    <div class="card-title"><span class="dot"></span>实时资源占用</div>
+    <div class="progress-row">
+      <span class="p-label">CPU</span>
+      <div class="p-track"><div class="p-fill cpu" id="cpu-bar" style="width:0%"></div></div>
+      <span class="p-val" id="cpu-pct">0%</span>
+    </div>
+    <div class="progress-row">
+      <span class="p-label">内存</span>
+      <div class="p-track"><div class="p-fill mem" id="mem-bar" style="width:0%"></div></div>
+      <span class="p-val" id="mem-pct">0%</span>
+    </div>
+    <div class="stat-detail" id="stat-detail" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;line-height:1.9;"></div>
+  </section>
+
+  <!-- 系统信息 -->
+  <section class="card" id="system">
+    <div class="card-title"><span class="dot"></span>系统信息</div>
+    <div class="info-grid" id="system-info">
       <div class="loading">加载中...</div>
     </div>
   </section>
 
-  <!-- 资源占用 -->
-  <section class="card">
-    <h2>📊 实时资源占用</h2>
-    <div class="stat-row">
-      <div class="stat">
-        <div class="stat-label">CPU 使用率</div>
-        <div class="stat-value" id="cpu-val">--%</div>
-        <div class="bar"><div class="bar-fill bar-cpu" id="cpu-bar"></div></div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">内存使用率</div>
-        <div class="stat-value" id="mem-val">--%</div>
-        <div class="bar"><div class="bar-fill bar-mem" id="mem-bar"></div></div>
-      </div>
-    </div>
-    <div class="stat-detail" id="stat-detail"></div>
-  </section>
-
   <!-- 磁盘 -->
-  <section class="card">
-    <h2>💾 磁盘</h2>
+  <section class="card" id="disk">
+    <div class="card-title"><span class="dot"></span>磁盘</div>
     <table class="table" id="disk-table">
       <thead><tr><th>挂载点</th><th>总量</th><th>已用</th><th>可用</th><th>使用率</th></tr></thead>
       <tbody></tbody>
     </table>
   </section>
 
-  <!-- Nginx 管理 -->
-  <section class="card">
-    <h2>🟢 Nginx 管理</h2>
-    <div class="nginx-status" id="nginx-status">检测中...</div>
+  <!-- Nginx -->
+  <section class="card" id="nginx">
+    <div class="card-title"><span class="dot"></span>Nginx 管理</div>
+    <div style="margin-bottom:16px;">
+      <span class="badge missing" id="nginx-status">检测中...</span>
+    </div>
     <div class="btn-row">
       <button class="btn btn-primary" id="btn-install" onclick="installNginx()">安装 Nginx</button>
       <button class="btn btn-warn" id="btn-restart" onclick="restartNginx()">重启 Nginx</button>
       <button class="btn" id="btn-test" onclick="testNginx()">测试配置</button>
     </div>
 
-    <h3 class="config-title">配置文件 <code id="config-path"></code></h3>
+    <div class="config-title">配置文件 <code id="config-path"></code></div>
     <div class="config-actions">
       <button class="btn" onclick="loadConfig()">重新加载</button>
       <button class="btn btn-primary" onclick="saveConfig()">保存配置</button>
     </div>
     <textarea id="config-editor" class="editor" spellcheck="false" placeholder="nginx 配置内容..."></textarea>
   </section>
-
-</main>
+</div>
 
 <div id="toast" class="toast"></div>
 
