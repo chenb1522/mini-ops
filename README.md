@@ -19,7 +19,7 @@
 curl -fsSL https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
 ```
 
-安装完成后访问 `http://服务器IP:8888`，默认用户名 `admin`。
+安装完成后访问 `http://服务器IP:18080`，默认用户名 `admin`。
 
 如需指定端口 / 用户名 / 密码：
 
@@ -63,7 +63,7 @@ sudo nohup /usr/local/bin/mini-ops >/var/log/mini-ops.log 2>&1 &
 
 ## 启动后如何使用
 
-1. 浏览器打开 `http://服务器IP:8888`
+1. 浏览器打开 `http://服务器IP:18080`
 2. 输入用户名 `admin`
 3. 密码在启动日志中：随机生成会打印 `已生成随机密码，请记录: xxx`；若用 `-pass` 指定则用你设的密码
 
@@ -71,7 +71,7 @@ sudo nohup /usr/local/bin/mini-ops >/var/log/mini-ops.log 2>&1 &
 
 | 参数 | 说明 | 默认 |
 |------|------|------|
-| `-port` | 监听端口 | `8888` |
+| `-port` | 监听端口 | `18080` |
 | `-user` | 登录用户名 | `admin` |
 | `-pass` | 登录密码（留空自动生成） | 随机 |
 | `-no-auth` | 禁用认证（仅限可信内网） | 关闭 |

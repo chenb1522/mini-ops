@@ -14,7 +14,7 @@ import (
 var webFS embed.FS
 
 const (
-	defaultPort = "8888"
+	defaultPort = "18080"
 	defaultUser = "admin"
 	appName     = "mini-ops"
 )
