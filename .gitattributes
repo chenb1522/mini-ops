@@ -1,0 +1,2 @@
+# 保证 shell 脚本在 Windows 检出时保持 LF 换行
+*.sh text eol=lf

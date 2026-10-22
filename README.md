@@ -1,0 +1,133 @@
+# mini-ops — Linux 服务器轻量管理工具
+
+一个极轻量的 Linux 服务器 Web 管理小工具。单文件二进制、无第三方依赖、内存占用极低（约几 MB），一行命令即可安装。
+
+## 功能
+
+- ✅ **机器基本信息**：主机名、发行版、内核、架构、CPU、内存、运行时长、负载、磁盘、网络
+- ✅ **实时资源监控**：CPU / 内存使用率（自动刷新）
+- ✅ **Nginx 管理**：一键安装、重启、配置编辑（带自动备份与校验回滚）
+- ✅ **跨发行版兼容**：自动识别 apt / yum / dnf / apk / pacman / zypper，适配 systemd / sysvinit / openrc
+- ✅ **极低资源占用**：Go 静态编译，无运行时依赖，RSS 内存仅几 MB
+- ✅ **简单认证**：HTTP Basic Auth，密码可自动生成
+
+## 快速开始
+
+### 方式一：一键安装（推荐）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
+```
+
+安装完成后访问 `http://服务器IP:8888`，默认用户名 `admin`。
+
+如需指定端口 / 用户名 / 密码：
+
+```bash
+sudo sh install.sh 8080 admin mypassword
+```
+
+### 方式二：下载二进制手动运行
+
+从 [Releases](https://github.com/chenb1522/mini-ops/releases) 下载对应架构的二进制，然后：
+
+```bash
+# 以 amd64 为例
+chmod +x sysman-linux-amd64
+sudo ./sysman-linux-amd64
+```
+
+| 架构 | 文件 |
+|------|------|
+| x86_64 | `sysman-linux-amd64` |
+| arm64 | `sysman-linux-arm64` |
+| armv7 | `sysman-linux-armv7` |
+
+### 方式三：手动安装为系统服务
+
+```bash
+# 1. 放入系统路径
+sudo mv sysman-linux-amd64 /usr/local/bin/sysman
+sudo chmod +x /usr/local/bin/sysman
+
+# 2. 后台运行
+sudo nohup /usr/local/bin/sysman >/var/log/sysman.log 2>&1 &
+```
+
+## 启动后如何使用
+
+1. 浏览器打开 `http://服务器IP:8888`
+2. 输入用户名 `admin`
+3. 密码在启动日志中：随机生成会打印 `已生成随机密码，请记录: xxx`；若用 `-pass` 指定则用你设的密码
+
+## 命令行参数
+
+| 参数 | 说明 | 默认 |
+|------|------|------|
+| `-port` | 监听端口 | `8888` |
+| `-user` | 登录用户名 | `admin` |
+| `-pass` | 登录密码（留空自动生成） | 随机 |
+| `-no-auth` | 禁用认证（仅限可信内网） | 关闭 |
+
+也支持环境变量 `SYSMAN_PORT` / `SYSMAN_USER` / `SYSMAN_PASS` 配置。
+
+示例：
+
+```bash
+# 指定端口和密码
+./sysman-linux-amd64 -port 8080 -pass mypassword
+
+# 内网可信环境，免登录
+./sysman-linux-amd64 -no-auth
+
+# 环境变量方式
+SYSMAN_PORT=8080 SYSMAN_PASS=xxx ./sysman-linux-amd64
+```
+
+## 本地编译
+
+```bash
+cd sysman
+# 编译当前平台
+go build -ldflags="-s -w" -o sysman .
+
+# 交叉编译（发布用）
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o sysman-linux-amd64 .
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o sysman-linux-arm64 .
+GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -ldflags="-s -w" -o sysman-linux-armv7 .
+```
+
+## API 接口
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/system` | 机器基本信息 |
+| GET | `/api/stats` | CPU/内存实时占用 |
+| GET | `/api/nginx/status` | nginx 安装状态 |
+| POST | `/api/nginx/install` | 安装 nginx |
+| POST | `/api/nginx/restart` | 重启 nginx（先自动测试配置） |
+| POST | `/api/nginx/test` | 测试 nginx 配置 |
+| GET | `/api/nginx/config` | 读取配置 |
+| POST | `/api/nginx/config` | 保存配置（自动备份 + 校验回滚） |
+
+## 安全说明
+
+- 默认启用 HTTP Basic Auth，密码可自定义或自动生成
+- 配置保存前会先用 `nginx -t` 校验，失败自动回滚并备份
+- 建议仅在内网或配合反向代理 + HTTPS 使用
+
+## 目录结构
+
+```
+sysman/
+├── main.go          # 入口 + HTTP 路由 + 认证
+├── system.go        # 系统信息采集（/proc 读取）
+├── nginx.go         # nginx 管理 + 发行版适配
+├── web/             # 前端静态资源（embed 进二进制）
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+├── install.sh       # 一键安装脚本
+├── go.mod
+└── README.md
+```
