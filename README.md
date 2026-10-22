@@ -29,19 +29,26 @@ sudo sh install.sh 8080 admin mypassword
 
 ### 方式二：下载二进制手动运行
 
-从 [Releases](https://github.com/chenb1522/mini-ops/releases) 下载对应架构的二进制，然后：
+到 [Releases](https://github.com/chenb1522/mini-ops/releases) 页面下载对应架构的二进制，然后执行：
 
-```bash
-# 以 amd64 为例
-chmod +x mini-ops-linux-amd64
-sudo ./mini-ops-linux-amd64
-```
-
-| 架构 | 文件 |
-|------|------|
+| 架构 | 文件名 |
+|------|--------|
 | x86_64 | `mini-ops-linux-amd64` |
 | arm64 | `mini-ops-linux-arm64` |
 | armv7 | `mini-ops-linux-armv7` |
+
+```bash
+# 1. 赋予执行权限
+chmod +x mini-ops-linux-amd64
+
+# 2. 直接运行（会打印访问地址和随机密码）
+sudo ./mini-ops-linux-amd64
+
+# 3. 指定端口和密码运行
+sudo ./mini-ops-linux-amd64 -port 8080 -pass yourpassword
+```
+
+> 运行后浏览器打开 `http://服务器IP:端口`，用启动日志里的用户名和密码登录。
 
 ### 方式三：手动安装为系统服务
 
