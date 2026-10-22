@@ -15,11 +15,20 @@
 
 ### 方式一：一键安装（推荐）
 
-**国内用户（走加速镜像）：**
+**国内用户（走加速镜像，任选其一）：**
 
 ```bash
-curl -fsSL https://ghproxy.com/https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
+# 镜像 1
+curl -fsSL https://ghfast.top/https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
+
+# 镜像 2
+curl -fsSL https://ghproxy.net/https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
+
+# 镜像 3
+curl -fsSL https://gh-proxy.com/https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
 ```
+
+> 以上镜像均为第三方公共服务，若都不可用，请用下方官方源或改用「方式二」手动下载。
 
 **国外 / 官方源：**
 

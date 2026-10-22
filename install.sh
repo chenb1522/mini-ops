@@ -57,13 +57,16 @@ download_from() {
 echo "==> 下载 mini-ops (${BINARCH})..."
 
 # 下载源列表：用户自定义源 > 加速镜像（国内） > GitHub 官方源
-# 注：加速镜像为第三方公共服务，仅用于加速下载；若不可用会自动回退官方源
+# 注：加速镜像为第三方公共服务，稳定性不保证；会按顺序逐个尝试，失败自动回退下一个
 if [ -n "$MINIOPS_BASE_URL" ]; then
   URLS="${MINIOPS_BASE_URL}/${BIN_NAME}"
 else
   URLS="
+https://ghfast.top/https://github.com/chenb1522/mini-ops/releases/latest/download/${BIN_NAME}
+https://ghproxy.net/https://github.com/chenb1522/mini-ops/releases/latest/download/${BIN_NAME}
+https://gh-proxy.com/https://github.com/chenb1522/mini-ops/releases/latest/download/${BIN_NAME}
 https://ghproxy.com/https://github.com/chenb1522/mini-ops/releases/latest/download/${BIN_NAME}
-https://mirror.ghproxy.com/https://github.com/chenb1522/mini-ops/releases/latest/download/${BIN_NAME}
+https://github.moeyy.xyz/https://github.com/chenb1522/mini-ops/releases/latest/download/${BIN_NAME}
 https://github.com/chenb1522/mini-ops/releases/latest/download/${BIN_NAME}
 "
 fi
