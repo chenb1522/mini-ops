@@ -1,7 +1,11 @@
 #!/bin/sh
 # mini-ops 一键安装脚本
-# 用法: curl -fsSL https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sh
-# 或:   sh install.sh [端口] [用户名] [密码]
+# 用法: curl -fsSL https://raw.githubusercontent.com/chenb1522/mini-ops/main/install.sh | sudo sh
+# 或:   sudo sh install.sh [端口] [用户名] [密码]
+#
+# 说明：
+#   - 不指定密码时，首次安装会自动生成随机密码（打印在日志里）
+#   - 多次运行是幂等的：已有密码会保留，不会因重复安装而改变
 
 set -e
 
@@ -23,6 +27,7 @@ BASE_URL="${MINIOPS_BASE_URL:-https://github.com/chenb1522/mini-ops/releases/lat
 BIN_NAME="mini-ops-linux-${BINARCH}"
 INSTALL_DIR="/usr/local/bin"
 CONF_DIR="/etc/mini-ops"
+ENV_FILE="${CONF_DIR}/env"
 
 # 需要 root 权限
 if [ "$(id -u)" -ne 0 ]; then
@@ -48,19 +53,31 @@ chmod +x /tmp/mini-ops
 echo "==> 安装到 ${INSTALL_DIR}..."
 mv /tmp/mini-ops "${INSTALL_DIR}/mini-ops"
 
-# 配置
+# 配置：处理密码保留逻辑
 mkdir -p "${CONF_DIR}"
-if [ -n "$PASS" ]; then
-  cat > "${CONF_DIR}/env" <<EOF
+
+# 如果已有旧配置，读取其中的旧密码（用于重复运行时不丢密码）
+OLD_PASS=""
+if [ -f "${ENV_FILE}" ]; then
+  OLD_PASS=$(grep -E '^MINIOPS_PASS=' "${ENV_FILE}" 2>/dev/null | head -1 | cut -d'=' -f2-)
+fi
+
+# 决定最终密码：命令行指定 > 旧配置已有 > 留空让程序自动生成
+FINAL_PASS="${PASS:-${OLD_PASS}}"
+
+if [ -n "$FINAL_PASS" ]; then
+  cat > "${ENV_FILE}" <<EOF
 MINIOPS_PORT=${PORT}
 MINIOPS_USER=${USER}
-MINIOPS_PASS=${PASS}
+MINIOPS_PASS=${FINAL_PASS}
 EOF
+  echo "==> 使用密码: ${FINAL_PASS}"
 else
-  cat > "${CONF_DIR}/env" <<EOF
+  cat > "${ENV_FILE}" <<EOF
 MINIOPS_PORT=${PORT}
 MINIOPS_USER=${USER}
 EOF
+  echo "==> 未指定密码，将由程序自动生成随机密码"
 fi
 
 # 注册 systemd 服务（若有 systemd）
@@ -72,7 +89,7 @@ After=network.target
 
 [Service]
 Type=simple
-EnvironmentFile=${CONF_DIR}/env
+EnvironmentFile=${ENV_FILE}
 ExecStart=${INSTALL_DIR}/mini-ops
 Restart=on-failure
 RestartSec=3
@@ -82,9 +99,14 @@ NoNewPrivileges=false
 WantedBy=multi-user.target
 EOF
   systemctl daemon-reload
-  systemctl enable mini-ops >/dev/null 2>&1
-  systemctl start mini-ops
-  echo "==> 已通过 systemd 启动"
+  systemctl enable mini-ops >/dev/null 2>&1 || true
+  if systemctl is-active --quiet mini-ops 2>/dev/null; then
+    systemctl restart mini-ops
+    echo "==> 已重启 systemd 服务"
+  else
+    systemctl start mini-ops
+    echo "==> 已启动 systemd 服务"
+  fi
 else
   # 无 systemd，用 nohup 启动
   nohup "${INSTALL_DIR}/mini-ops" >/var/log/mini-ops.log 2>&1 &
@@ -96,8 +118,8 @@ echo "======================================"
 echo " mini-ops 安装完成！"
 echo " 访问地址: http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '服务器IP'):${PORT}"
 echo " 用户名: ${USER}"
-if [ -n "$PASS" ]; then
-  echo " 密码: ${PASS}"
+if [ -n "$FINAL_PASS" ]; then
+  echo " 密码: ${FINAL_PASS}"
 else
   echo " 密码: 启动时自动生成，查看日志: journalctl -u mini-ops 或 /var/log/mini-ops.log"
 fi
